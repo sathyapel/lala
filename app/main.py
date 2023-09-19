@@ -1,19 +1,11 @@
 from fastapi import FastAPI
 import os 
-from app.database.models.base_class import Base as BaseMeta
-from app.database.session import engine 
-from app.backend.core.config import settings
-from app.database.models.model_base import meta_data
-from fastapi import Depends
-from app.database.session import get_db
-from sqlalchemy.orm import Session
-from .database.models.categories import CategoriesModel
 import pandas as pd
 import joblib
 from .feature.data_cleaning import *
 
 import json
-meta_data.create_all(bind=engine)
+#meta_data.create_all(bind=engine)
 if not(os.getcwd().__contains__("saved_model")):
           cur_dir = os.getcwd()
           app_dir_path = os.path.join(cur_dir,"app")
@@ -23,12 +15,12 @@ if not(os.getcwd().__contains__("saved_model")):
 cat_and_lsa_df = pd.read_csv("content.csv")
 lsa_trained = joblib.load('trained.pkl')
     
-app = FastAPI(title=settings.PROJECT_NAME,version=settings.PROJECT_VERSION)
+app = FastAPI(title="LalaAI")
 
 
 
 @app.get("/refresh")
-async def testApi(watching_video:str,dbSession:Session =Depends(get_db)):
+async def testApi(watching_video:str):
     """ check and refresh the categories from original database currently for inital testing
      it loads data from csv files  """
     try:
