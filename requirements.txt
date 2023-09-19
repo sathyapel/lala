@@ -3,9 +3,8 @@ uvicorn
 numpy
 pandas
 scikit-learn
-deta
 joblib
-
+scipy
 
 
 
