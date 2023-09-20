@@ -31,7 +31,7 @@ async def testApi(watching_video:str):
         storiesids = reorder_list(content_list_tuples,watching_video)
         ids = [ids.get('s_id') for ids in storiesids ]
         final_df=cat_and_lsa_df.loc[cat_and_lsa_df["id"].isin(ids)]
-        return final_df[["id","title","image_link","duration",]].to_dict(orient='records')
+        return final_df[["id","title","image_link","duration",]].rename(columns={"image_link":"image"}).to_dict(orient='records')
     except:
         return {"ErrorCode":1 ,"Data":None,"Message":"Invalid video title or video not found"}
       
