@@ -1,8 +1,14 @@
 from fastapi import FastAPI
 import os 
-import pandas as pd
 import joblib
+import pandas as pd
+from fastapi.middleware.wsgi import WSGIMiddleware
 from .feature.data_cleaning import *
+from .dashboard.dash import dashApp as dashboard
+from .db.model import Base
+from .db.sessions import engine
+from .api.api_base import base_router
+Base.metadata.create_all(bind=engine)
 
 import json
 #meta_data.create_all(bind=engine)
@@ -14,8 +20,16 @@ if not(os.getcwd().__contains__("saved_model")):
           os.chdir(init_data_path)
 cat_and_lsa_df = pd.read_csv("content.csv")
 lsa_trained = joblib.load('trained.pkl')
-    
+
+def include_router(app):   
+	app.include_router(base_router)
+     
+         
 app = FastAPI(title="LalaAI")
+include_router(app)
+app.mount(path="/analytics", app=WSGIMiddleware(dashboard.server))
+
+
 
 
 

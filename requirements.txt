@@ -4,3 +4,10 @@ numpy
 pandas
 scikit-learn
 joblib
+plotly
+dash
+python-dotenv==1.0.0
+sqlalchemy[mypy]
+psycopg2==2.9.6
+pymysql
+alembic==1.11.1
