@@ -1,19 +1,17 @@
 from fastapi import FastAPI
 import os 
-from app.database.models.base_class import Base as BaseMeta
-from app.database.session import engine 
-from app.backend.core.config import settings
-from app.database.models.model_base import meta_data
-from fastapi import Depends
-from app.database.session import get_db
-from sqlalchemy.orm import Session
-from .database.models.categories import CategoriesModel
-import pandas as pd
 import joblib
+import pandas as pd
+from fastapi.middleware.wsgi import WSGIMiddleware
 from .feature.data_cleaning import *
+from .dashboard.dash import dashApp as dashboard
+from .db.model import Base
+from .db.sessions import engine
+from .api.api_base import base_router
+Base.metadata.create_all(bind=engine)
 
 import json
-meta_data.create_all(bind=engine)
+#meta_data.create_all(bind=engine)
 if not(os.getcwd().__contains__("saved_model")):
           cur_dir = os.getcwd()
           app_dir_path = os.path.join(cur_dir,"app")
@@ -22,13 +20,21 @@ if not(os.getcwd().__contains__("saved_model")):
           os.chdir(init_data_path)
 cat_and_lsa_df = pd.read_csv("content.csv")
 lsa_trained = joblib.load('trained.pkl')
-    
-app = FastAPI(title=settings.PROJECT_NAME,version=settings.PROJECT_VERSION)
+
+def include_router(app):   
+	app.include_router(base_router)
+     
+         
+app = FastAPI(title="LalaAI")
+include_router(app)
+app.mount(path="/analytics", app=WSGIMiddleware(dashboard.server))
+
+
 
 
 
 @app.get("/refresh")
-async def testApi(watching_video:str,dbSession:Session =Depends(get_db)):
+async def testApi(watching_video:str):
     """ check and refresh the categories from original database currently for inital testing
      it loads data from csv files  """
     try:
@@ -39,7 +45,9 @@ async def testApi(watching_video:str,dbSession:Session =Depends(get_db)):
         storiesids = reorder_list(content_list_tuples,watching_video)
         ids = [ids.get('s_id') for ids in storiesids ]
         final_df=cat_and_lsa_df.loc[cat_and_lsa_df["id"].isin(ids)]
-        return final_df[["id","title","image_link","duration",]].to_dict(orient='records')
+        final_df = final_df[["id","title","image_link","duration",]].rename(columns={"image_link":"image"})
+        final_df["title"] = final_df["title"].apply(lambda x: x.encode("utf8"))
+        return final_df.to_dict(orient='records')
     except:
         return {"ErrorCode":1 ,"Data":None,"Message":"Invalid video title or video not found"}
       
