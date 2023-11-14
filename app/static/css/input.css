@@ -1,0 +1,27 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+    ::-webkit-scrollbar {
+        width: .4rem;
+        height: .4rem;
+    }
+
+    ::-webkit-scrollbar-track {
+        background-color: theme(colors.slate.300);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background-color: theme(colors.slate.500);
+    }
+
+    @supports (scrollbar-color: red blue) {
+        * {
+            scrollbar-color: theme(colors.slate.500) theme(colors.slate.300);
+            scrollbar-width: thin;
+        }
+    }
+
+}
