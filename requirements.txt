@@ -17,3 +17,4 @@ dash-leaflet
 Flask-Caching
 mypy
 flask_sqlalchemy
+folium
