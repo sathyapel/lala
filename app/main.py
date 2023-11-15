@@ -10,7 +10,7 @@ from .db.sessions import engine
 from .api.api_base import base_router
 from .core.config import settings
 
-Base.metadata.create_all(bind=engine)
+#Base.metadata.create_all(bind=engine)
 
 import json
 
@@ -37,7 +37,7 @@ def include_router(app):
 app = FastAPI(title="LalaAI")
 
 app.mount(path="/analytics", app=WSGIMiddleware(dashboard.server))
-app.include_router(base_router)
+#app.include_router(base_router)
 
 
 

@@ -1,4 +1,4 @@
-import mypy
+
 from dash import Dash, html, dash_table, dcc, callback, Output, Input
 import pandas as pd
 import plotly.express as px
@@ -19,8 +19,8 @@ from flask import render_template_string
 import folium
 from folium import Choropleth, Circle, Marker
 from folium.plugins import HeatMap, MarkerCluster
-import math
-from flask_caching import Cache
+
+
 from app.dashboard.pages.dashboard import DashBoard
 def moveToSavedModel():
     if not (os.getcwd().__contains__("saved_model")):
@@ -45,16 +45,16 @@ external_stylesheets = ["https://unpkg.com/tailwindcss@^1.0/dist/tailwind.min.cs
 dashApp = Dash(__name__, requests_pathname_prefix="/analytics/",
                external_stylesheets=external_stylesheets)
 
-db = SQLAlchemy(model_class=Base)
-dashApp.server.config["SQLALCHEMY_DATABASE_URI"] = settings.DATABASE_URL
-db.init_app(dashApp.server)
+#db = SQLAlchemy(model_class=Base)
+#dashApp.server.config["SQLALCHEMY_DATABASE_URI"] = settings.DATABASE_URL
+#db.init_app(dashApp.server)
 
 
-with dashApp.server.app_context():
-    db.reflect()
+'''with dashApp.server.app_context():
+    db.reflect()'''
 
 
-@dashApp.server.route("/dba")
+'''@dashApp.server.route("/dba")
 def dba():
     print(db.Model.metadata.tables.keys())
     language = LanguageModel(name="Malayalam", status=1,
@@ -62,7 +62,7 @@ def dba():
     db.session.add(language)
     db.session.commit()
 
-    return "Hi"
+    return "Hi" '''
 
 @dashApp.server.route("/mapsonlala/allusers")
 def getAllUsers():
