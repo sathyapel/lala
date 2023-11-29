@@ -99,7 +99,7 @@ dashApp.layout = html.Div(
     dmc.MantineProvider(
     id="app-theme",
     theme={
-        "colorScheme": "dark",
+        "colorScheme": "white",
         "primaryColor": "indigo"
 
     },

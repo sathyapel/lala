@@ -52,6 +52,7 @@ class HeaderComponent():
         Input("switch-theme", "checked"),
         prevent_intial_call=True)
         def switch_theme(theme, checked):
+            print("changing_theme",f"{theme}")
             if not checked:
                 theme.update({'colorScheme': 'dark'})
             else:

@@ -3,7 +3,8 @@ import dash_mantine_components as dmc
 from dash import dcc
 import pandas as pd
 import plotly.express as px
-from app.feature.data_cleaning2 import get_comments_cleaned,get_clean_stories,get_age_per_today
+from app.feature.data_cleaning2 import get_comments_cleaned, get_clean_stories, get_age_per_today
+import datetime
 
 
 class DashBoard:
@@ -31,15 +32,46 @@ class DashBoard:
                              ], className="col-span-3", withBorder=True,
                                  p="sm", shadow="xs", radius="sm"),
                              dmc.Paper(children=[
+
+                                 # Age distribution of kids over App block
                                  dmc.Text("Age distribution of kids over App",
                                           className="font-sans text-left lg:text-xl"),
 
-                                 dmc.Paper(className="mx-2 my-3 grid grid-cols-3 gap-3",
+                                 dmc.Paper(className="mx-2 my-3 grid grid-cols-4 gap-4",
                                            children=[
-                                               dmc.Paper(withBorder=False, className="col-span-2",children=[
-                                                    dcc.Graph(id="graph_age_over_comments",figure=self.get_age_distribution_over_comments(),config={"displayModeBar":False})
-                                               ])
-                                              
+                                               dmc.Paper(withBorder=True, shadow="md", className="col-span-full lg:col-span-3", children=[
+                                                   dmc.LoadingOverlay(
+                                                   dcc.Graph(id="graph_age_over_comments", figure=self.get_age_distribution_over_comments(
+                                                   ), config={"displayModeBar": False}),
+                                                   id="graph_age_over_comments_loading",loaderProps={"variant": "bars", "color": "blue", "size": "md"},),
+
+                                               ]),
+                                               dmc.Stack(className="col-span-full lg:col-span-1",
+
+                                                         justify="center",
+                                                         children=[
+                                                             dmc.Text("filter by",
+                                                                      className="font-sans text-left lg:text-md"),
+
+                                                             dmc.MultiSelect(id="get_age_option", data=["This year", "This Month"],
+
+                                                                                maxSelectedValues=2,
+                                                                                className="text-black"
+                                                                             ),
+                                                                             dmc.Text("view by",
+                                                                      className="font-sans text-left lg:text-md"),
+                                                             dmc.ChipGroup(
+                                                                 [dmc.Chip(x, value=x) for x in [
+                                                                     "Bar", "line", "funnel","histogram" ]],
+                                                                 value="Bar",
+                                                             id="bar_type")
+
+
+
+
+
+                                                         ])
+
 
                                            ])
 
@@ -48,13 +80,19 @@ class DashBoard:
                              ], withBorder=True,
                                  className="col-span-3",
                                  p="sm", shadow="xs", radius="sm"),
-                             dmc.Paper("sample content", withBorder=True,
+                             dmc.Paper(id="users_growth_over_time",children=[
+                                
+                             ]
+                                       ,
+                                        
+                                       
+                                        withBorder=True,
                                        p="sm", shadow="xs", radius="sm"),
-                             dmc.Paper("sample content", withBorder=True,
+                             dmc.Paper("sample content2", withBorder=True,
                                        p="sm", shadow="xs", radius="sm"),
-                             dmc.Paper("sample content", withBorder=True,
+                             dmc.Paper("sample content3", withBorder=True,
                                        p="sm", shadow="xs", radius="sm"),
-                             dmc.Paper("sample content", withBorder=True,
+                             dmc.Paper("sample content4", withBorder=True,
                                        p="sm", shadow="xs", radius="sm")
 
                          ])
@@ -65,13 +103,21 @@ class DashBoard:
     def setCallbacks(self):
         @callback(
             Output("engagement_score_graph", "figure"),
-            Output("graph_age_over_comments","figure"),
             Input('app-theme', 'theme'))
-        def update_theme(apptheme):
-            return self.draw_engagement_score(apptheme.get("colorScheme")),self.get_age_distribution_over_comments(apptheme.get("colorScheme"))
-
+        def update_engagement_score(apptheme):
+            return self.draw_engagement_score(apptheme.get("colorScheme"))
+        
+        @callback(
+            Output("graph_age_over_comments", "figure"),
+            Input('app-theme', 'theme'),
+            Input("get_age_option", "value"),
+             Input("bar_type", "value"))
+        def update_age_distribution(apptheme, selected_values,bar_type):
+            print("selected_values", bar_type)
+            return  self.get_age_distribution_over_comments(apptheme.get("colorScheme"), selected_values,bar_type)
     def get(self):
         self.setCallbacks()
+        # self.setCallback2()
         return self.mapContainer
 
     def draw_engagement_score(self, theme="white"):
@@ -102,25 +148,100 @@ class DashBoard:
 
         return fig
 
-
-    def get_age_distribution_over_comments(self,theme="white"):
+    def get_age_distribution_over_comments(self, theme="white", options=None,chart_type=None):
         date_format = '%Y-%m-%d'
-        parent_kids_df =self.parent_kids_df
-        parent_kids_df["dob"] = pd.to_datetime(parent_kids_df.age,format=date_format)
-        parent_kids_df["age_on_today"] = parent_kids_df.dob.apply(get_age_per_today)
+        parent_kids_df = self.parent_kids_df
+        parent_kids_df["dob"] = pd.to_datetime(
+            parent_kids_df.age, format=date_format)
+        parent_kids_df["age_on_today"] = parent_kids_df.dob.apply(
+            get_age_per_today)
 
-        stories =get_clean_stories('stories.csv')
+        stories = get_clean_stories('stories.csv')
         comments = get_comments_cleaned('comments.csv')
-        comments_on_stories = comments.merge(stories.rename(columns={"id":"story_id"}),on="story_id",how="left")
-        comment_with_story_and_kid_age=comments_on_stories.rename(columns={"user_id":"kid_id"}).merge(
-        parent_kids_df.rename(columns={"id":"kid_id"})[["kid_id","age_on_today"]],on="kid_id",how="left")
+        comments_on_stories = comments.merge(stories.rename(
+            columns={"id": "story_id"}), on="story_id", how="left")
+        comment_with_story_and_kid_age = comments_on_stories.rename(columns={"user_id": "kid_id"}).merge(
+            parent_kids_df.rename(columns={"id": "kid_id"})[["kid_id", "age_on_today"]], on="kid_id", how="left")
         age_distribution_over_comments = \
-        comment_with_story_and_kid_age.age_on_today.value_counts().reset_index(name="count")
+            comment_with_story_and_kid_age.age_on_today.value_counts().reset_index(name="count")
 
-        top_age_dis_over_comments=age_distribution_over_comments[:12]
-        fig2=px.bar(age_distribution_over_comments,x="age_on_today",y="count",
-            title="Age Distribution Over kids interaction",labels={"age_on_today":"age",},
-            template="plotly_dark" if theme == "dark" else "plotly_white")
-        fig2.update_xaxes(range=[0,20])
+        top_age_dis_over_comments = age_distribution_over_comments[:12]
+        fig1 = px.bar(age_distribution_over_comments, x="age_on_today", y="count",
+                      title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", },
+                      template="plotly_dark" if theme == "dark" else "plotly_white")
+        comment_with_story_and_kid_age["updated_at"] = pd.to_datetime(
+            comment_with_story_and_kid_age["updated_at"])
+        this_month_engage = comment_with_story_and_kid_age[comment_with_story_and_kid_age["updated_at"] >= datetime.datetime(
+            2023, 10, 1, 0, 0, 0)]
+        #current year engagement
+        this_year_engage = comment_with_story_and_kid_age[comment_with_story_and_kid_age["updated_at"] >= datetime.datetime(
+            2023, 1, 1, 0, 0, 0)]
         
+        this_month_data = \
+            this_month_engage.age_on_today.value_counts().reset_index(
+                name="count").rename(columns={"count": "this_month_count"})
+        this_month_data = this_month_data.sort_values(by="age_on_today")
+        
+        #year 
+        this_year_data = \
+            this_year_engage.age_on_today.value_counts().reset_index(
+                name="count").rename(columns={"count": "this_year_count"})
+        this_year_data = this_year_data.sort_values(by="age_on_today")
+
+
+        total_engage = age_distribution_over_comments
+        age_dist_total = total_engage.sort_values(
+            by="age_on_today").rename(columns={"count": "total_count"})
+        result = this_month_data.merge(age_dist_total, how="outer")
+        result = result.loc[result["age_on_today"].isin(
+            range(0, 20))].fillna(0)
+        
+        total_data =this_year_data.merge(result,how="outer")
+        total_data1 =total_data.loc[total_data["age_on_today"].isin(range(0,20))].fillna(0)
+        result =total_data1
+        
+        y_axis_data = ["total_count"]
+        if options != None:
+            for selected_value in options:
+                if (selected_value == "This year"):
+                    y_axis_data.append("this_year_count")
+                else:
+                    y_axis_data.append("this_month_count")
+        if len(y_axis_data) > 0:
+           
+            if(chart_type=="Bar"):
+                fig2 = px.bar(result, x="age_on_today", y=y_axis_data, title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", "total_count": "This Year"},
+                             template="plotly_dark" if theme == "dark" else "plotly_white")
+            elif(chart_type=="line"):
+                fig2 = px.line(result, x="age_on_today", y=y_axis_data, title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", "total_count": "This Year"},
+                             template="plotly_dark" if theme == "dark" else "plotly_white")
+            elif(chart_type=="funnel"):
+                fig2 = px.funnel(result, x="age_on_today", y=y_axis_data, title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", "total_count": "This Year"},
+                             template="plotly_dark" if theme == "dark" else "plotly_white")
+            else:
+                fig2 = px.histogram(result, x="age_on_today", y=y_axis_data, title="Age Distribution Over kids interaction",barmode="group", labels={"age_on_today": "Age", "total_count": "This Year"},
+                             template="plotly_dark" if theme == "dark" else "plotly_white")
+            
+        else:
+            age_distribution_over_comments = age_distribution_over_comments.sort_values(by="age_on_today")  
+            if(chart_type=="Bar"):
+                fig2 = px.bar(age_distribution_over_comments, x="age_on_today", y="count",
+                      title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", },
+                      template="plotly_dark" if theme == "dark" else "plotly_white")
+            elif(chart_type=="line"):
+                fig2 = px.line(age_distribution_over_comments, x="age_on_today", y="count",
+                      title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", },
+                      template="plotly_dark" if theme == "dark" else "plotly_white")
+            elif(chart_type=="funnel"):
+                fig2 = px.funnel(age_distribution_over_comments, x="age_on_today", y="count",
+                      title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", },
+                      template="plotly_dark" if theme == "dark" else "plotly_white")
+            else:
+                fig2 = px.histogram(age_distribution_over_comments, x="age_on_today", y="count",
+                      title="Age Distribution Over kids interaction", labels={"age_on_today": "Age", },
+                      template="plotly_dark" if theme == "dark" else "plotly_white",barmode="group")
+            
+
+        fig2.update_xaxes(range=[0, 20])
+
         return fig2
