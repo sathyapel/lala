@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.responses import HTMLResponse, RedirectResponse
 import os 
 import joblib
 import pandas as pd
@@ -68,4 +69,4 @@ async def testApi(watching_video:str):
 async def root():
   cwd = os.getcwd()
   print(cwd)
-  return {"Welcome to Lala Analytics"}
+  return RedirectResponse(url="/analytics")

@@ -18,3 +18,7 @@ Flask-Caching
 mypy
 flask_sqlalchemy
 folium
+wordcloud
+matplotlib
+datashader
+pyproj
